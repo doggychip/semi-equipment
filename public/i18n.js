@@ -1,6 +1,7 @@
 /* ========================================
    Semi Equipment Value Chain Dashboard — i18n System
    ======================================== */
+// Use safeStorage if available (from page's own shim), otherwise use own store
 var i18nStorage = (typeof safeStorage !== 'undefined') ? safeStorage : {
   _s: {},
   getItem: function(k) { return this._s[k] || null; },
@@ -300,130 +301,243 @@ var I18N = {
   "Projected Returns":              { zh: "预计回报" },
   "Equal Weight":                   { zh: "等权重" },
 
-  // ── Company Names ──
-  "ASML Holding N.V.":              { zh: "阿斯麦" },
-  "Onto Innovation Inc.":           { zh: "Onto创新" },
-  "Lam Research Corporation":       { zh: "泛林半导体" },
-  "Applied Materials, Inc.":        { zh: "应用材料" },
-  "KLA Corporation":                { zh: "科磊" },
-  "Teradyne, Inc.":                 { zh: "泰瑞达" },
-  "Coherent Corp.":                 { zh: "相干公司" },
-  "IPG Photonics Corporation":      { zh: "IPG光子" },
-  "Entegris, Inc.":                 { zh: "英特格" },
-  "MKS Instruments, Inc.":          { zh: "MKS仪器" },
-  "Camtek Ltd.":                    { zh: "康检" },
-  "Ultra Clean Holdings, Inc.":     { zh: "超净控股" },
-  "Synopsys, Inc.":                 { zh: "新思科技" },
-  "Cadence Design Systems, Inc.":   { zh: "楷登电子" },
-  "Ansys, Inc.":                    { zh: "安世" },
-  "Amkor Technology, Inc.":         { zh: "安靠科技" },
-  "Aehr Test Systems":              { zh: "Aehr测试" },
-  "FormFactor, Inc.":               { zh: "FormFactor" },
-  "Taiwan Semiconductor Manufacturing Company Limited": { zh: "台积电" },
-  "Intel Corporation":              { zh: "英特尔" },
-  "GLOBALFOUNDRIES Inc.":           { zh: "格芯" },
-  "United Microelectronics Corporation": { zh: "联华电子" },
-  "Azenta, Inc.":                   { zh: "Azenta" },
-  "Ichor Holdings, Ltd.":           { zh: "Ichor控股" },
-
   // ── Theme ──
   "Light Mode":                     { zh: "亮色模式" },
   "Dark Mode":                      { zh: "暗色模式" },
+
+  // ── Language toggle ──
   "EN":                             { zh: "EN" },
-  "中":                             { zh: "中" },
+  "中文":                           { zh: "中文" },
 };
 
-/**
- * Translate a key. Returns Chinese if available and lang=zh, else returns key.
- * Normalizes dashes for cross-encoding compatibility.
- */
+/* ── Company Name Translations ── */
+var I18N_COMPANIES = {
+  "ASML Holding N.V.": "阿斯麦",
+  "Onto Innovation Inc.": "Onto创新",
+  "Lam Research Corporation": "泛林半导体",
+  "Applied Materials, Inc.": "应用材料",
+  "KLA Corporation": "科磊",
+  "Teradyne, Inc.": "泰瑞达",
+  "Coherent Corp.": "相干公司",
+  "IPG Photonics Corporation": "IPG光子",
+  "Entegris, Inc.": "英特格",
+  "MKS Instruments, Inc.": "MKS仪器",
+  "Camtek Ltd.": "康检",
+  "Ultra Clean Holdings, Inc.": "超净控股",
+  "Synopsys, Inc.": "新思科技",
+  "Cadence Design Systems, Inc.": "楷登电子",
+  "Ansys, Inc.": "安世",
+  "Amkor Technology, Inc.": "安靠科技",
+  "Aehr Test Systems": "Aehr测试",
+  "FormFactor, Inc.": "FormFactor",
+  "Taiwan Semiconductor Manufacturing Company Limited": "台积电",
+  "Intel Corporation": "英特尔",
+  "GLOBALFOUNDRIES Inc.": "格芯",
+  "United Microelectronics Corporation": "联华电子",
+  "Azenta, Inc.": "Azenta",
+  "Ichor Holdings, Ltd.": "Ichor控股",
+};
+
+/* ── Translation Function ── */
 function t(key) {
-  if (I18N_LANG !== 'zh') return key;
-  if (I18N[key] && I18N[key].zh) return I18N[key].zh;
-  var nk = key.replace(/[\u2013\u2014]/g, '-').replace(/&amp;/g, '&');
-  if (I18N[nk] && I18N[nk].zh) return I18N[nk].zh;
+  if (I18N_LANG === 'en') return key;
+  var entry = I18N[key];
+  if (entry && entry.zh) return entry.zh;
+  // Try normalized lookup (replace various dash types with standard em-dash)
+  var normalized = key.replace(/[\u2012\u2013\u2014\u2015\u2212—–-]+/g, '\u2014');
+  if (normalized !== key) {
+    entry = I18N[normalized];
+    if (entry && entry.zh) return entry.zh;
+  }
   return key;
 }
 
-/**
- * Apply translations to all elements with data-i18n attribute
- */
+function tCompany(name) {
+  if (I18N_LANG === 'en') return name;
+  return I18N_COMPANIES[name] || name;
+}
+
+/* ── Apply translations to static DOM elements ── */
 function applyI18n() {
-  var els = document.querySelectorAll('[data-i18n]');
-  els.forEach(function(el) {
-    var key = el.getAttribute('data-i18n');
-    if (I18N_LANG === 'zh') {
-      el.textContent = t(key);
-    } else {
-      el.textContent = key;
+  // Translate tab links
+  document.querySelectorAll('.tab-link').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.textContent = t(orig);
+  });
+
+  // Translate h1, h2, h3
+  document.querySelectorAll('h1, h2, h3').forEach(function(el) {
+    // Skip if it contains child elements that aren't just text
+    if (el.querySelector('button, input, select')) return;
+    var orig = el.getAttribute('data-i18n') || el.innerHTML.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.innerHTML = t(orig);
+  });
+
+  // Translate buttons (but not period buttons like 1D, 1W etc., and not sb-item/sidebar-item which are handled separately)
+  document.querySelectorAll('button').forEach(function(el) {
+    if (el.classList.contains('sb-item') || el.classList.contains('sidebar-item')) return;
+    var txt = el.textContent.trim();
+    if (/^[0-9]/.test(txt) || txt === '×' || txt === '&times;' || txt.length > 60) return;
+    var orig = el.getAttribute('data-i18n') || txt;
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    var translated = t(orig);
+    if (translated !== orig) el.textContent = translated;
+  });
+
+  // Translate th elements
+  document.querySelectorAll('th').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    var translated = t(orig);
+    if (translated !== orig) el.textContent = translated;
+  });
+
+  // Translate p subtitles
+  document.querySelectorAll('p').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (I18N[orig]) {
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+      el.textContent = t(orig);
     }
   });
 
-  var tabs = document.querySelectorAll('.tab-link');
-  tabs.forEach(function(tab) {
-    var key = tab.getAttribute('data-i18n') || tab.textContent.trim();
-    if (I18N_LANG === 'zh' && I18N[key]) {
-      tab.textContent = I18N[key].zh;
+  // Translate nav section buttons on index.html
+  document.querySelectorAll('.nav-btn, .section-btn, [data-section]').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.textContent = t(orig);
+  });
+
+  // Translate sidebar items (sb-item and sidebar-item buttons) — preserve inner <span> dot
+  document.querySelectorAll('.sb-item, .sidebar-item').forEach(function(el) {
+    // The button has <span class="dot">...</span> + text node
+    var textNodes = [];
+    el.childNodes.forEach(function(n) {
+      if (n.nodeType === 3 && n.textContent.trim()) textNodes.push(n);
+    });
+    if (textNodes.length > 0) {
+      var orig = el.getAttribute('data-i18n') || textNodes[0].textContent.trim();
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+      textNodes[0].textContent = t(orig);
     }
   });
 
-  var sbItems = document.querySelectorAll('.sidebar-item');
-  sbItems.forEach(function(btn) {
-    var span = btn.querySelector('.sidebar-dot');
-    var textSpan = btn.querySelector('[data-i18n]');
-    if (textSpan) return;
-    var text = btn.textContent.trim();
-    if (I18N_LANG === 'zh') {
-      var translated = t(text);
-      if (span) {
-        btn.textContent = '';
-        btn.appendChild(span);
-        btn.appendChild(document.createTextNode(translated));
-      } else {
-        btn.textContent = translated;
-      }
+  // Translate sidebar section titles
+  document.querySelectorAll('.sb-section-title, .sidebar-title').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.textContent = t(orig);
+  });
+
+  // Translate card-title, sbar-label, kpi-label, section-header, stat-label elements
+  document.querySelectorAll('.card-title, .sbar-label, .sec-title, .section-title, .section-header, .stat-title, .stat-label, .mr-label, .sc-metric-label, .rsk-title, .sidebar-group-title, .sidebar-category, .kpi-label, .section-desc, .page-subtitle').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.textContent = t(orig);
+  });
+
+  // Translate descriptions and subtitles with broad matching
+  document.querySelectorAll('.sec-sub, .section-sub, .card-sub, .subtitle').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (I18N[orig]) {
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+      el.textContent = t(orig);
     }
   });
 
-  var titles = document.querySelectorAll('.sidebar-title, .section-title, .card-title, .stat-label, .page-subtitle');
-  titles.forEach(function(el) {
-    var key = el.getAttribute('data-i18n') || el.textContent.trim();
-    if (I18N_LANG === 'zh') {
-      el.textContent = t(key);
-    }
-  });
-
-  var h1 = document.querySelector('.page-title');
-  if (h1) {
-    var key = h1.getAttribute('data-i18n') || h1.textContent.trim();
-    if (I18N_LANG === 'zh') {
-      h1.textContent = t(key);
-    }
+  // Update lang toggle button text
+  var langBtn = document.getElementById('langToggle');
+  if (langBtn) {
+    langBtn.textContent = I18N_LANG === 'en' ? '中文' : 'EN';
   }
 }
 
-/**
- * Toggle between English and Chinese
- */
+/* ── Translate dynamic content (company names, layer names in table cells) ── */
+function applyI18nDynamic() {
+  // Translate company names in table cells
+  document.querySelectorAll('td').forEach(function(el) {
+    var txt = el.textContent.trim();
+    if (I18N_COMPANIES[txt]) {
+      el.textContent = I18N_LANG === 'en' ? txt : I18N_COMPANIES[txt];
+    }
+    // Check for layer names in cells
+    if (I18N[txt] && I18N[txt].zh) {
+      el.textContent = t(txt);
+    }
+  });
+
+  // Translate layer names in any element with class containing 'layer', 'sector', 'category'
+  document.querySelectorAll('[class*="layer"], [class*="sector"], [class*="category"], .hl-name, .sector-name').forEach(function(el) {
+    var txt = el.textContent.trim();
+    if (I18N_COMPANIES[txt]) {
+      el.textContent = I18N_LANG === 'en' ? txt : I18N_COMPANIES[txt];
+    }
+    if (I18N[txt] && I18N[txt].zh) {
+      el.textContent = t(txt);
+    }
+  });
+
+  // Translate labels in cards, divs with financial text
+  document.querySelectorAll('.card-label, .metric-label, .stat-label, dt, label').forEach(function(el) {
+    var txt = el.textContent.trim();
+    if (I18N[txt] && I18N[txt].zh) {
+      el.textContent = t(txt);
+    }
+  });
+
+  // Translate option/select elements
+  document.querySelectorAll('option').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (I18N[orig] && I18N[orig].zh) {
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+      el.textContent = t(orig);
+    }
+  });
+}
+
+/* ── Toggle Language ── */
 function toggleLang() {
-  I18N_LANG = (I18N_LANG === 'en') ? 'zh' : 'en';
+  I18N_LANG = I18N_LANG === 'en' ? 'zh' : 'en';
   i18nStorage.setItem('lang', I18N_LANG);
-  
-  var langBtn = document.getElementById('lang-btn');
-  if (langBtn) {
-    langBtn.textContent = (I18N_LANG === 'en') ? '中' : 'EN';
-  }
-  
   applyI18n();
-  
-  if (typeof refreshI18n === 'function') refreshI18n();
+  // Re-render dynamic content if renderAll exists
+  if (typeof renderAll === 'function') {
+    try { renderAll(); } catch(e) {}
+  }
+  if (typeof renderTable === 'function' && typeof renderAll !== 'function') {
+    try { renderTable(); } catch(e) {}
+  }
+  // Apply dynamic translations after re-render
+  applyI18nDynamic();
 }
 
-// Apply on load
-document.addEventListener('DOMContentLoaded', function() {
-  var langBtn = document.getElementById('lang-btn');
-  if (langBtn) {
-    langBtn.textContent = (I18N_LANG === 'en') ? '中' : 'EN';
-  }
+/* ── Inject language toggle button into tab bar ── */
+function injectLangToggle() {
+  var nav = document.querySelector('.tab-bar');
+  if (!nav) return;
+  if (document.getElementById('langToggle')) return;
+  var btn = document.createElement('button');
+  btn.id = 'langToggle';
+  btn.className = 'lang-toggle-btn';
+  btn.textContent = I18N_LANG === 'en' ? '中文' : 'EN';
+  btn.onclick = toggleLang;
+  btn.style.cssText = 'margin-left:auto;padding:4px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:inherit;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;white-space:nowrap;';
+  btn.onmouseenter = function() { btn.style.background = 'rgba(99,102,241,0.25)'; };
+  btn.onmouseleave = function() { btn.style.background = 'rgba(255,255,255,0.06)'; };
+  nav.appendChild(btn);
+}
+
+/* ── Auto-init on DOM ready ── */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    injectLangToggle();
+    applyI18n();
+    applyI18nDynamic();
+  });
+} else {
+  injectLangToggle();
   applyI18n();
-});
+  applyI18nDynamic();
+}

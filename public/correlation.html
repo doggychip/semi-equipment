@@ -222,7 +222,6 @@ button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
   </div>
   <div class="sidebar-footer">
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌓</button>
-    <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">中</button>
   </div>
 </aside>
 
@@ -368,12 +367,6 @@ function toggleTheme() {
   if (saved) document.documentElement.setAttribute('data-theme', saved);
 })();
 
-function toggleLang() {
-  if (typeof I18N_LANG !== 'undefined') {
-    I18N_LANG = I18N_LANG === 'en' ? 'zh' : 'en';
-    safeStorage.setItem('lang', I18N_LANG);
-    if (typeof applyI18n === 'function') applyI18n();
-  }
 }
 
 var DATA = null;
