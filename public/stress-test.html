@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stress Test — Semi Equipment Value Chain Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+var _memStore={};
+var safeStorage={getItem:function(k){return _memStore[k]||null},setItem:function(k,v){_memStore[k]=v},removeItem:function(k){delete _memStore[k]}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>if(typeof Chart==="undefined"){var s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js";document.head.appendChild(s);}</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+--text-xs:clamp(.72rem,.68rem+.2vw,.8rem);
+--text-sm:clamp(.8rem,.75rem+.25vw,.9rem);
+--text-base:clamp(.9rem,.85rem+.25vw,1rem);
+--text-lg:clamp(1rem,.9rem+.5vw,1.3rem);
+--text-xl:clamp(1.3rem,1rem+1vw,1.9rem);
+--space-1:.25rem;--space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-5:1.25rem;
+--space-6:1.5rem;--space-8:2rem;--space-10:2.5rem;--space-12:3rem;
+--radius-sm:.3rem;--radius-md:.5rem;--radius-lg:.75rem;--radius-xl:1rem;
+--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+--ease:180ms cubic-bezier(.16,1,.3,1);
+}
+[data-theme="dark"]{
+--bg:#0d0f14;--surface:#13151d;--s2:#181a24;--s3:#1c1f2a;--s4:#22253a;
+--div:#252836;--border:#2e3148;
+--text:#dde0f0;--muted:#7a7e96;--faint:#454868;
+--primary:#5b9cf6;--pri-h:#3b7de8;
+--success:#56cc84;--warn:#f0ad4e;--error:#f07070;
+--cyan:#56d4e8;--purple:#a87ef0;--orange:#f5a454;--gold:#e8c44a;
+--green:#56cc84;--red:#f07070;--blue:#5b9cf6;--teal:#4fc4cf;
+--shadow:0 4px 20px rgba(0,0,0,.5);--shadow-sm:0 1px 4px rgba(0,0,0,.3);
+}
+[data-theme="light"]{
+--bg:#f2f3f7;--surface:#fff;--s2:#f8f9fc;--s3:#eef0f6;--s4:#e5e8f0;
+--div:#dde1ec;--border:#ccd0e0;
+--text:#1a1d2e;--muted:#5c617a;--faint:#9498b0;
+--primary:#2563eb;--pri-h:#1d50cc;
+--success:#2d7a4a;--warn:#b45309;--error:#c0392b;
+--cyan:#0891b2;--purple:#7c3aed;--orange:#c2570a;--gold:#b45309;
+--green:#2d7a4a;--red:#c0392b;--blue:#2563eb;--teal:#0f766e;
+--shadow:0 4px 20px rgba(0,0,0,.1);--shadow-sm:0 1px 4px rgba(0,0,0,.06);
+}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{min-height:100dvh;font-family:var(--font-body);font-size:var(--text-base);color:var(--text);background:var(--bg);display:flex;flex-direction:column;overflow:hidden;height:100vh}
+button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
+.dash-nav{display:flex;gap:2px;background:var(--s2);padding:4px var(--space-4);border-bottom:1px solid var(--border);flex-shrink:0}
+.dash-nav button{padding:4px 14px;font-size:10px;font-weight:700;color:var(--muted);border-radius:var(--radius-sm);letter-spacing:.04em;text-transform:uppercase}
+.dash-nav button:hover{color:var(--text);background:var(--s3)}
+.dash-nav button.active{color:var(--primary);background:color-mix(in srgb,var(--primary) 12%,transparent)}
+.dash-nav-link{padding:4px 14px;font-size:10px;font-weight:700;color:var(--muted);border-radius:var(--radius-sm);letter-spacing:.04em;text-transform:uppercase;text-decoration:none;margin-left:auto}
+.dash-nav-link:hover{color:var(--text);background:var(--s3)}
+.tab-bar{display:flex;gap:2px;background:var(--surface);border-bottom:2px solid var(--border);padding:0 var(--space-4);position:sticky;top:0;z-index:100;overflow-x:auto;flex-shrink:0}
+.tab-link{padding:var(--space-3) var(--space-4);font-size:var(--text-xs);font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s,border-color .2s}
+.tab-link:hover{color:var(--text)}
+.tab-link.active{color:var(--primary);border-bottom-color:var(--primary)}
+.page-wrapper{display:flex;flex:1;overflow:hidden}
+.sidebar{width:210px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:var(--space-3) 0}
+.sidebar-section{padding:var(--space-2) var(--space-4);margin-bottom:var(--space-1)}
+.sidebar-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:var(--space-2)}
+.sidebar-item{display:flex;align-items:center;gap:var(--space-2);padding:5px var(--space-4);font-size:var(--text-xs);color:var(--muted);cursor:pointer;transition:all .15s;border-radius:0;text-decoration:none}
+.sidebar-item:hover{background:var(--s2);color:var(--text)}
+.sidebar-item.active{background:var(--s3);color:var(--primary);font-weight:600}
+.sidebar-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sidebar-count{margin-left:auto;font-size:9px;color:var(--faint);font-weight:600}
+.sidebar-footer{margin-top:auto;padding:var(--space-3) var(--space-4);border-top:1px solid var(--div);display:flex;gap:var(--space-2);align-items:center}
+.page-body{flex:1;overflow-y:auto;padding:var(--space-6)}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-6);flex-wrap:wrap;gap:var(--space-3)}
+.page-title{font-size:var(--text-lg);font-weight:700;letter-spacing:-.02em}
+.page-subtitle{font-size:var(--text-xs);color:var(--muted);margin-top:2px}
+.controls{display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap}
+.ctrl-btn{padding:6px 14px;font-size:var(--text-xs);font-weight:600;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all .2s}
+.ctrl-btn:hover{background:var(--s3);color:var(--text)}
+.ctrl-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-5);overflow:hidden;margin-bottom:var(--space-4)}
+.card-title{font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--space-3);display:flex;align-items:center;gap:var(--space-2)}
+.card-chart{position:relative;height:260px;width:100%}
+.card-chart-sm{position:relative;height:180px;width:100%}
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:2px 7px;border-radius:var(--radius-sm);white-space:nowrap}
+.b-green{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
+.b-red{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
+.b-blue{background:color-mix(in srgb,var(--blue) 15%,transparent);color:var(--blue)}
+.b-purple{background:color-mix(in srgb,var(--purple) 15%,transparent);color:var(--purple)}
+.b-orange{background:color-mix(in srgb,var(--orange) 15%,transparent);color:var(--orange)}
+.b-muted{background:var(--s3);color:var(--muted)}
+.theme-toggle{width:34px;height:34px;border-radius:var(--radius-md);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;background:var(--surface)}
+.theme-toggle:hover{background:var(--s3)}
+.lang-toggle{width:34px;height:34px;border-radius:var(--radius-md);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;background:var(--surface);color:var(--muted)}
+.lang-toggle:hover{background:var(--s3);color:var(--text)}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-4);margin-bottom:var(--space-6)}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-4)}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.stat-value{font-size:var(--text-lg);font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.stat-sub{font-size:var(--text-xs);color:var(--muted);margin-top:2px}
+.side-panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;opacity:0;pointer-events:none;transition:opacity .25s}
+.side-panel-overlay.open{opacity:1;pointer-events:auto}
+.side-panel{position:fixed;top:0;right:0;width:380px;max-width:92vw;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:401;transform:translateX(100%);transition:transform .3s cubic-bezier(.16,1,.3,1);overflow-y:auto;padding:var(--space-5)}
+.side-panel.open{transform:translateX(0)}
+.side-panel-close{float:right;font-size:18px;cursor:pointer;color:var(--muted);width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-sm);border:1px solid var(--border)}
+.side-panel-close:hover{background:var(--s3);color:var(--text)}
+.side-panel-title{font-size:var(--text-lg);font-weight:700;margin-bottom:var(--space-2)}
+.side-panel-sub{font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)}
+.side-panel-section{margin-bottom:var(--space-4)}
+.side-panel-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--space-2)}
+.side-panel-row{display:flex;justify-content:space-between;padding:4px 0;font-size:var(--text-xs);border-bottom:1px solid var(--div)}
+.side-panel-row span:first-child{color:var(--muted)}
+.side-panel-row span:last-child{font-weight:600;font-family:var(--font-mono)}
+
+/* Stress Test specific */
+.scenario-btn{display:block;width:100%;text-align:left;padding:var(--space-3);margin-bottom:var(--space-2);border-radius:var(--radius-md);border:2px solid var(--border);background:var(--s2);cursor:pointer;transition:all .2s}
+.scenario-btn:hover{border-color:var(--muted);background:var(--s3)}
+.scenario-btn.active{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,var(--s2))}
+.scenario-btn .sc-name{font-size:var(--text-xs);font-weight:700;color:var(--text);margin-bottom:2px}
+.scenario-btn .sc-desc{font-size:10px;color:var(--muted);line-height:1.3}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+.scroll-x{overflow-x:auto}
+
+/* Heat map */
+.heat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--space-2)}
+.heat-cell{padding:var(--space-3);border-radius:var(--radius-md);text-align:center;font-family:var(--font-mono);font-size:10px;font-weight:700;border:1px solid var(--border);cursor:pointer;transition:transform .15s}
+.heat-cell:hover{transform:scale(1.05);z-index:1}
+.heat-cell .hc-ticker{font-size:11px;margin-bottom:2px}
+.heat-cell .hc-impact{font-size:10px;opacity:.9}
+
+/* Winner/Loser lists */
+.wl-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+.wl-list{display:flex;flex-direction:column;gap:var(--space-2)}
+.wl-item{display:flex;align-items:center;justify-content:space-between;padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);background:var(--s2);font-size:var(--text-xs)}
+.wl-item .wl-ticker{font-family:var(--font-mono);font-weight:700;color:var(--primary);cursor:pointer}
+.wl-item .wl-ticker:hover{text-decoration:underline}
+
+/* Portfolio inputs */
+.port-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--space-2);margin-bottom:var(--space-4)}
+.port-item{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs)}
+.port-item label{font-weight:700;font-family:var(--font-mono);width:48px;flex-shrink:0}
+.port-item input{width:60px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:var(--radius-sm);font-size:var(--text-xs);font-family:var(--font-mono);text-align:right}
+.port-item input:focus{outline:none;border-color:var(--primary)}
+.port-summary{background:var(--s2);border-radius:var(--radius-md);padding:var(--space-4);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--space-3);margin-bottom:var(--space-4)}
+.port-metric{text-align:center}
+.port-metric .pm-label{font-size:var(--text-xs);color:var(--muted);margin-bottom:2px}
+.port-metric .pm-value{font-size:var(--text-lg);font-weight:700;font-family:var(--font-mono)}
+
+/* Risk cards */
+.risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--space-4)}
+.risk-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-4)}
+.risk-card-name{font-size:var(--text-sm);font-weight:700;margin-bottom:var(--space-2)}
+.risk-card-row{display:flex;justify-content:space-between;font-size:var(--text-xs);padding:3px 0;border-bottom:1px solid var(--div)}
+.risk-card-row span:first-child{color:var(--muted)}
+.risk-badge{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700}
+.risk-high{background:rgba(240,112,112,.2);color:var(--red)}
+.risk-critical{background:rgba(240,112,112,.3);color:var(--red)}
+.risk-med{background:rgba(240,173,78,.2);color:var(--warn)}
+.risk-low{background:rgba(86,204,132,.2);color:var(--green)}
+.risk-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:var(--space-2)}
+.risk-tag{font-size:9px;padding:2px 6px;border-radius:var(--radius-sm);background:var(--s3);color:var(--muted);font-weight:600}
+
+@media(max-width:900px){.sidebar{display:none}.stats-row{grid-template-columns:1fr 1fr}.grid-2{grid-template-columns:1fr}.heat-grid{grid-template-columns:repeat(4,1fr)}.wl-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.stats-row{grid-template-columns:1fr}.heat-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- Cross-dashboard nav -->
+<div class="dash-nav">
+  <button onclick="goDash('ai')" data-i18n="AI Hardware">AI Hardware</button>
+  <button onclick="goDash('sw')" data-i18n="Software Stack">Software Stack</button>
+  <button class="active" data-i18n="Semi Equipment">Semi Equipment</button>
+  <a href="news.html" class="dash-nav-link" data-i18n="News Feed">News Feed</a>
+</div>
+<!-- Tab bar -->
+<nav class="tab-bar">
+  <a href="index.html" class="tab-link" data-i18n="Main Dashboard">Main Dashboard</a>
+  <a href="correlation.html" class="tab-link" data-i18n="Correlation">Correlation</a>
+  <a href="technicals.html" class="tab-link" data-i18n="Technicals">Technicals</a>
+  <a href="insider.html" class="tab-link" data-i18n="Insider Activity">Insider Activity</a>
+  <a href="options.html" class="tab-link" data-i18n="Options Flow">Options Flow</a>
+  <a href="sentiment.html" class="tab-link" data-i18n="Sentiment">Sentiment</a>
+  <a href="leaderboard.html" class="tab-link" data-i18n="Leaderboard">Leaderboard</a>
+  <a href="stress-test.html" class="tab-link active" data-i18n="Stress Test">Stress Test</a>
+</nav>
+
+<div class="page-wrapper">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title" data-i18n="Equipment Layers">Equipment Layers</div>
+      <div class="sidebar-item active" data-layer="all" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:var(--primary)"></span>
+        <span data-i18n="All Layers">All Layers</span>
+        <span class="sidebar-count">24</span>
+      </div>
+      <div class="sidebar-item" data-layer="EUV / Lithography" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#e84393"></span>
+        <span data-i18n="EUV / Lithography">EUV / Lithography</span>
+        <span class="sidebar-count">2</span>
+      </div>
+      <div class="sidebar-item" data-layer="Etch & Deposition" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#6c5ce7"></span>
+        <span data-i18n="Etch & Deposition">Etch & Deposition</span>
+        <span class="sidebar-count">3</span>
+      </div>
+      <div class="sidebar-item" data-layer="Process Control & Inspection" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#0984e3"></span>
+        <span data-i18n="Process Control & Inspection">Process Control & Inspection</span>
+        <span class="sidebar-count">2</span>
+      </div>
+      <div class="sidebar-item" data-layer="Test & Measurement" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#00b894"></span>
+        <span data-i18n="Test & Measurement">Test & Measurement</span>
+        <span class="sidebar-count">3</span>
+      </div>
+      <div class="sidebar-item" data-layer="Materials & Chemicals" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#fdcb6e"></span>
+        <span data-i18n="Materials & Chemicals">Materials & Chemicals</span>
+        <span class="sidebar-count">2</span>
+      </div>
+      <div class="sidebar-item" data-layer="Wafer & Substrate" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#e17055"></span>
+        <span data-i18n="Wafer & Substrate">Wafer & Substrate</span>
+        <span class="sidebar-count">3</span>
+      </div>
+      <div class="sidebar-item" data-layer="EDA & Design Software" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#a29bfe"></span>
+        <span data-i18n="EDA & Design Software">EDA & Design Software</span>
+        <span class="sidebar-count">3</span>
+      </div>
+      <div class="sidebar-item" data-layer="Packaging & Assembly" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#fab1a0"></span>
+        <span data-i18n="Packaging & Assembly">Packaging & Assembly</span>
+        <span class="sidebar-count">3</span>
+      </div>
+      <div class="sidebar-item" data-layer="Foundry & IDM" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#55efc4"></span>
+        <span data-i18n="Foundry & IDM">Foundry & IDM</span>
+        <span class="sidebar-count">4</span>
+      </div>
+      <div class="sidebar-item" data-layer="Capital Equipment Services" onclick="filterLayer(this)">
+        <span class="sidebar-dot" style="background:#74b9ff"></span>
+        <span data-i18n="Capital Equipment Services">Capital Equipment Services</span>
+        <span class="sidebar-count">3</span>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+      <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">中</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="page-body">
+    <div class="page-header">
+      <div>
+        <div class="page-title" data-i18n="Stress Test Scenarios">Stress Test Scenarios</div>
+        <div class="page-subtitle">Simulate macro shocks across the semi equipment value chain</div>
+      </div>
+    </div>
+
+    <!-- 1. Scenario Selector -->
+    <div class="card">
+      <div class="card-title" data-i18n="Select a Scenario">Select a Scenario</div>
+      <div class="controls" id="scenarioBtns"></div>
+    </div>
+
+    <!-- 2. Impact Matrix (Heatmap) -->
+    <div class="card">
+      <div class="card-title" data-i18n="Impact Matrix">Impact Matrix</div>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)">Color intensity reflects projected price impact under selected scenario</p>
+      <div class="heat-grid" id="heatGrid"></div>
+    </div>
+
+    <!-- 3. Winners & Losers -->
+    <div class="card">
+      <div class="card-title" data-i18n="Winners & Losers">Winners & Losers</div>
+      <div class="wl-grid">
+        <div>
+          <div style="font-size:var(--text-xs);font-weight:700;color:var(--green);margin-bottom:var(--space-2)" data-i18n="Winners">Winners (Beneficiaries)</div>
+          <div class="wl-list" id="wlWinners"></div>
+        </div>
+        <div>
+          <div style="font-size:var(--text-xs);font-weight:700;color:var(--red);margin-bottom:var(--space-2)" data-i18n="Losers">Losers (Hurt)</div>
+          <div class="wl-list" id="wlLosers"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Portfolio Simulator -->
+    <div class="card">
+      <div class="card-title" data-i18n="Portfolio Simulator">Portfolio Simulator</div>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)">Enter allocation weight per ticker (%). Default: equal weight. Total should sum to 100%.</p>
+      <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-3)">
+        <button class="ctrl-btn active" onclick="setEqualWeight()" data-i18n="Equal Weight">Equal Weight</button>
+        <button class="ctrl-btn" onclick="resetWeights()" data-i18n="Reset">Reset to 0</button>
+        <button class="ctrl-btn" onclick="calcPortfolio()" style="background:var(--primary);color:#fff;border-color:var(--primary)" data-i18n="Calculate">Calculate</button>
+      </div>
+      <div class="port-grid" id="portInputs"></div>
+      <div class="port-summary" id="portSummary">
+        <div class="port-metric"><div class="pm-label" data-i18n="Portfolio Value">Portfolio Value (Before)</div><div class="pm-value" id="pmBefore">—</div></div>
+        <div class="port-metric"><div class="pm-label">Portfolio Value (After)</div><div class="pm-value" id="pmAfter">—</div></div>
+        <div class="port-metric"><div class="pm-label" data-i18n="Impact">Impact</div><div class="pm-value" id="pmImpact">—</div></div>
+        <div class="port-metric"><div class="pm-label">Impact %</div><div class="pm-value" id="pmImpactPct">—</div></div>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="cPortfolio"></canvas></div>
+    </div>
+
+    <!-- 5. Risk Summary -->
+    <div class="card">
+      <div class="card-title" data-i18n="Risk Summary">Risk Summary</div>
+      <div class="risk-grid" id="riskGrid"></div>
+    </div>
+
+  </div><!-- /page-body -->
+</div><!-- /page-wrapper -->
+
+<!-- Side panel -->
+<div id="panel-overlay" class="side-panel-overlay" onclick="closePanel()"></div>
+<div id="panel-drawer" class="side-panel">
+  <button class="side-panel-close" onclick="closePanel()">✕</button>
+  <div id="panel-title" class="side-panel-title"></div>
+  <div id="panel-sub" class="side-panel-sub"></div>
+  <div class="side-panel-section">
+    <div class="side-panel-section-title" data-i18n="Details">Details</div>
+    <div id="panel-data"></div>
+  </div>
+  <div class="side-panel-section">
+    <div class="side-panel-section-title" data-i18n="Thesis">Thesis</div>
+    <p id="panel-thesis" style="font-size:var(--text-xs);color:var(--muted);line-height:1.6"></p>
+  </div>
+  <div style="margin-top:var(--space-4)">
+    <a id="panel-link" href="#" target="_blank" style="font-size:var(--text-xs);color:var(--primary);text-decoration:none" data-i18n="View on Perplexity Finance">View on Perplexity Finance ↗</a>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script>
+var DASH_URLS = {
+  ai: 'https://aisupplychain.zeabur.app',
+  sw: 'https://software.zeabur.app',
+  semi: ''
+};
+function goDash(target) {
+  var url = DASH_URLS[target];
+  if (url) window.location.href = url + '/index.html';
+}
+function toggleTheme() {
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  safeStorage.setItem('theme', next);
+  if (DATA) renderScenario();
+}
+(function(){
+  var saved = safeStorage.getItem('theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+var DATA = null;
+fetch('semi_data.json').then(function(r){return r.json()}).then(function(d){
+  DATA = d;
+  initPage();
+}).catch(function(e){ console.error('Data load error', e); });
+
+function fmtNum(n) {
+  if (n >= 1e12) return '$' + (n/1e12).toFixed(2) + 'T';
+  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return '$' + (n/1e6).toFixed(0) + 'M';
+  return '$' + n.toLocaleString();
+}
+function fmtPct(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+function fmtPrice(n) { return '$' + n.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}); }
+
+// Side panel
+function openPanel(sym) {
+  if (!DATA || !DATA.tickers[sym]) return;
+  var d = DATA.tickers[sym];
+  document.getElementById('panel-title').textContent = sym + ' — ' + d.name;
+  document.getElementById('panel-sub').textContent = d.layer;
+  document.getElementById('panel-sub').style.color = d.layerColor;
+  var rows = [
+    ['Price', fmtPrice(d.price)],
+    ['Change', fmtPct(d.changePct)],
+    ['Market Cap', fmtNum(d.marketCap)],
+    ['P/E Ratio', d.pe > 0 ? d.pe.toFixed(1) : 'N/A'],
+    ['EPS', '$' + d.eps.toFixed(2)],
+    ['Volume', d.volume.toLocaleString()],
+    ['Avg Volume', d.avgVolume.toLocaleString()],
+    ['Day Range', fmtPrice(d.dayLow) + ' — ' + fmtPrice(d.dayHigh)],
+    ['52W Range', fmtPrice(d.yearLow) + ' — ' + fmtPrice(d.yearHigh)],
+    ['Div Yield', (d.divYield * 100).toFixed(2) + '%'],
+    ['6M Return', fmtPct(d.sixMReturn)],
+    ['Score', d.score + '/100'],
+  ];
+  var html = '';
+  rows.forEach(function(r) {
+    html += '<div class="side-panel-row"><span data-i18n="' + r[0] + '">' + t(r[0]) + '</span><span>' + r[1] + '</span></div>';
+  });
+  document.getElementById('panel-data').innerHTML = html;
+  document.getElementById('panel-thesis').textContent = d.thesis;
+  document.getElementById('panel-link').href = 'https://perplexity.ai/finance/' + sym;
+  document.getElementById('panel-overlay').classList.add('open');
+  document.getElementById('panel-drawer').classList.add('open');
+}
+function closePanel() {
+  document.getElementById('panel-overlay').classList.remove('open');
+  document.getElementById('panel-drawer').classList.remove('open');
+}
+
+// Layer filter
+var currentLayer = 'all';
+function filterLayer(el) {
+  document.querySelectorAll('.sidebar-item').forEach(function(i){ i.classList.remove('active'); });
+  el.classList.add('active');
+  currentLayer = el.getAttribute('data-layer');
+  renderScenario();
+}
+
+// ─── Scenario Definitions ───
+var SCENARIOS = {
+  'China Export Controls': {
+    desc: 'US/EU tighten export restrictions on advanced semiconductor equipment to China. EUV systems banned; etch/deposition tools restricted.',
+    impacts: {
+      ASML: -20, LRCX: -15, AMAT: -15, KLAC: -10, ONTO: -8,
+      ENTG: -8, MKSI: -8, CAMT: -10, UCTT: -5,
+      TER: -5, COHR: -3, IPGP: -3,
+      SNPS: -3, CDNS: -3, ANSS: -2,
+      AMKR: -5, AEHR: -5, FORM: -3,
+      TSM: -8, UMC: -5, GFS: +3, INTC: +5,
+      BRKS: -5, ICHR: -5
+    }
+  },
+  'WFE Cycle Downturn': {
+    desc: 'Global wafer fab equipment (WFE) spending enters cyclical downturn. Equipment orders fall 20-30% from peak. Memory capex hardest hit.',
+    impacts: {
+      ASML: -25, ONTO: -15, LRCX: -30, AMAT: -28, KLAC: -20,
+      TER: -15, COHR: -12, IPGP: -10,
+      ENTG: -15, MKSI: -18, CAMT: -25, UCTT: -22,
+      SNPS: -5, CDNS: -5, ANSS: -3,
+      AMKR: -10, AEHR: -18, FORM: -15,
+      TSM: -5, INTC: -8, GFS: -5, UMC: -5,
+      BRKS: -20, ICHR: -22
+    }
+  },
+  'TSMC Concentration Risk': {
+    desc: 'Market reprices TSMC concentration risk — customer diversification to Intel Foundry and Samsung accelerates. TSMC loses pricing power.',
+    impacts: {
+      ASML: -5, ONTO: -3, LRCX: -3, AMAT: -3, KLAC: -3,
+      TER: +2, COHR: 0, IPGP: 0,
+      ENTG: +2, MKSI: +2, CAMT: 0, UCTT: +3,
+      SNPS: +3, CDNS: +3, ANSS: +2,
+      AMKR: -15, AEHR: -5, FORM: -3,
+      TSM: -25, INTC: +10, GFS: +8, UMC: -5,
+      BRKS: +3, ICHR: +3
+    }
+  },
+  'Geopolitical (Taiwan)': {
+    desc: 'Escalating geopolitical tensions over Taiwan. Military exercises, shipping disruptions, and supply chain uncertainty spike.',
+    impacts: {
+      ASML: -15, ONTO: -8, LRCX: -10, AMAT: -10, KLAC: -8,
+      TER: -5, COHR: -3, IPGP: -2,
+      ENTG: -5, MKSI: -5, CAMT: -8, UCTT: -5,
+      SNPS: -3, CDNS: -3, ANSS: -2,
+      AMKR: -20, AEHR: -10, FORM: -8,
+      TSM: -40, INTC: +15, GFS: +5, UMC: -30,
+      BRKS: -5, ICHR: -5
+    }
+  },
+  'AI Capex Pullback': {
+    desc: 'Hyperscaler AI capital expenditure decelerates sharply. Data center build-out slows. Advanced packaging demand drops.',
+    impacts: {
+      ASML: -10, ONTO: -5, LRCX: -15, AMAT: -15, KLAC: -8,
+      TER: -10, COHR: -8, IPGP: -5,
+      ENTG: -8, MKSI: -8, CAMT: -10, UCTT: -8,
+      SNPS: -3, CDNS: -3, ANSS: -2,
+      AMKR: -15, AEHR: -12, FORM: -10,
+      TSM: -20, INTC: -5, GFS: -8, UMC: -10,
+      BRKS: -8, ICHR: -8
+    }
+  }
+};
+
+var activeScenario = 'China Export Controls';
+var chartPortfolio = null;
+
+function getThemeColors() {
+  var cs = getComputedStyle(document.documentElement);
+  return {
+    text: cs.getPropertyValue('--text').trim(),
+    muted: cs.getPropertyValue('--muted').trim(),
+    border: cs.getPropertyValue('--border').trim(),
+    green: cs.getPropertyValue('--green').trim(),
+    red: cs.getPropertyValue('--red').trim(),
+    primary: cs.getPropertyValue('--primary').trim(),
+    surface: cs.getPropertyValue('--surface').trim(),
+    s2: cs.getPropertyValue('--s2').trim()
+  };
+}
+
+function initPage() {
+  if (!DATA) return;
+
+  // Build scenario buttons
+  var btnHtml = '';
+  Object.keys(SCENARIOS).forEach(function(name) {
+    var cls = name === activeScenario ? 'ctrl-btn active' : 'ctrl-btn';
+    btnHtml += '<button class="' + cls + '" onclick="selectScenario(\'' + name.replace(/'/g, "\\'") + '\', this)" data-i18n="' + name + '">' + name + '</button>';
+  });
+  document.getElementById('scenarioBtns').innerHTML = btnHtml;
+
+  // Build portfolio inputs
+  var allTickers = Object.keys(DATA.tickers);
+  var eqWeight = (100 / allTickers.length).toFixed(1);
+  var portHtml = '';
+  allTickers.forEach(function(sym) {
+    portHtml += '<div class="port-item"><label>' + sym + '</label><input type="number" id="pw_' + sym + '" value="' + eqWeight + '" min="0" max="100" step="0.1" onchange="calcPortfolio()">%</div>';
+  });
+  document.getElementById('portInputs').innerHTML = portHtml;
+
+  // Build risk summary
+  renderRiskSummary();
+
+  // Render scenario
+  renderScenario();
+}
+
+function selectScenario(name, btn) {
+  activeScenario = name;
+  document.querySelectorAll('#scenarioBtns .ctrl-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  renderScenario();
+}
+
+function renderScenario() {
+  if (!DATA) return;
+  var tc = getThemeColors();
+  var scenario = SCENARIOS[activeScenario];
+  var impacts = scenario.impacts;
+  var allTickers = Object.keys(DATA.tickers);
+
+  // Filter by layer if needed
+  var visibleTickers = allTickers;
+  if (currentLayer !== 'all') {
+    visibleTickers = allTickers.filter(function(s) { return DATA.tickers[s].layer === currentLayer; });
+  }
+
+  // ─── 2. Impact Matrix (Heatmap) ───
+  var heatHtml = '';
+  visibleTickers.forEach(function(sym) {
+    var imp = impacts[sym] || 0;
+    var bg, txtColor;
+    if (imp > 0) {
+      var intensity = Math.min(imp / 15, 1);
+      bg = 'rgba(86,204,132,' + (0.15 + intensity * 0.45) + ')';
+      txtColor = tc.green;
+    } else if (imp < 0) {
+      var intensity = Math.min(Math.abs(imp) / 40, 1);
+      bg = 'rgba(240,112,112,' + (0.15 + intensity * 0.55) + ')';
+      txtColor = tc.red;
+    } else {
+      bg = 'var(--s3)';
+      txtColor = tc.muted;
+    }
+    heatHtml += '<div class="heat-cell" style="background:' + bg + '" onclick="openPanel(\'' + sym + '\')">' +
+      '<div class="hc-ticker" style="color:' + txtColor + '">' + sym + '</div>' +
+      '<div class="hc-impact">' + fmtPct(imp) + '</div>' +
+      '</div>';
+  });
+  document.getElementById('heatGrid').innerHTML = heatHtml;
+
+  // ─── 3. Winners & Losers ───
+  var winners = [];
+  var losers = [];
+  visibleTickers.forEach(function(sym) {
+    var imp = impacts[sym] || 0;
+    if (imp > 0) winners.push({ sym: sym, impact: imp });
+    else if (imp < 0) losers.push({ sym: sym, impact: imp });
+  });
+  winners.sort(function(a, b) { return b.impact - a.impact; });
+  losers.sort(function(a, b) { return a.impact - b.impact; });
+
+  var wHtml = '';
+  if (winners.length === 0) {
+    wHtml = '<div style="font-size:var(--text-xs);color:var(--muted);padding:var(--space-2)">No beneficiaries in this scenario</div>';
+  }
+  winners.forEach(function(w) {
+    wHtml += '<div class="wl-item"><span class="wl-ticker" onclick="openPanel(\'' + w.sym + '\')">' + w.sym + '</span>' +
+      '<span>' + DATA.tickers[w.sym].name + '</span>' +
+      '<span class="badge b-green">' + fmtPct(w.impact) + '</span></div>';
+  });
+  document.getElementById('wlWinners').innerHTML = wHtml;
+
+  var lHtml = '';
+  losers.forEach(function(l) {
+    lHtml += '<div class="wl-item"><span class="wl-ticker" onclick="openPanel(\'' + l.sym + '\')">' + l.sym + '</span>' +
+      '<span>' + DATA.tickers[l.sym].name + '</span>' +
+      '<span class="badge b-red">' + fmtPct(l.impact) + '</span></div>';
+  });
+  document.getElementById('wlLosers').innerHTML = lHtml;
+
+  // ─── 4. Portfolio calculation ───
+  calcPortfolio();
+  applyI18n();
+}
+
+function calcPortfolio() {
+  if (!DATA) return;
+  var tc = getThemeColors();
+  var scenario = SCENARIOS[activeScenario];
+  var impacts = scenario.impacts;
+  var allTickers = Object.keys(DATA.tickers);
+  var totalWeight = 0;
+  var portfolioBefore = 0;
+  var portfolioAfter = 0;
+  var baseValue = 100000; // $100k portfolio
+
+  var tickerWeights = {};
+  allTickers.forEach(function(sym) {
+    var el = document.getElementById('pw_' + sym);
+    var w = el ? parseFloat(el.value) || 0 : 0;
+    tickerWeights[sym] = w;
+    totalWeight += w;
+  });
+
+  if (totalWeight === 0) {
+    document.getElementById('pmBefore').textContent = '—';
+    document.getElementById('pmAfter').textContent = '—';
+    document.getElementById('pmImpact').textContent = '—';
+    document.getElementById('pmImpactPct').textContent = '—';
+    return;
+  }
+
+  // Normalize weights
+  var beforeVals = [];
+  var afterVals = [];
+  var labels = [];
+
+  allTickers.forEach(function(sym) {
+    var w = tickerWeights[sym] / totalWeight;
+    var allocated = baseValue * w;
+    var imp = (impacts[sym] || 0) / 100;
+    var afterVal = allocated * (1 + imp);
+    portfolioBefore += allocated;
+    portfolioAfter += afterVal;
+    if (tickerWeights[sym] > 0) {
+      labels.push(sym);
+      beforeVals.push(allocated);
+      afterVals.push(afterVal);
+    }
+  });
+
+  var impactDollar = portfolioAfter - portfolioBefore;
+  var impactPct = ((portfolioAfter / portfolioBefore) - 1) * 100;
+
+  document.getElementById('pmBefore').textContent = '$' + portfolioBefore.toLocaleString(undefined, {maximumFractionDigits: 0});
+  document.getElementById('pmAfter').textContent = '$' + portfolioAfter.toLocaleString(undefined, {maximumFractionDigits: 0});
+  document.getElementById('pmImpact').textContent = (impactDollar >= 0 ? '+$' : '-$') + Math.abs(impactDollar).toLocaleString(undefined, {maximumFractionDigits: 0});
+  document.getElementById('pmImpact').style.color = impactDollar >= 0 ? tc.green : tc.red;
+  document.getElementById('pmImpactPct').textContent = fmtPct(impactPct);
+  document.getElementById('pmImpactPct').style.color = impactPct >= 0 ? tc.green : tc.red;
+
+  // Chart
+  if (chartPortfolio) chartPortfolio.destroy();
+  chartPortfolio = new Chart(document.getElementById('cPortfolio'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Before',
+          data: beforeVals,
+          backgroundColor: tc.primary + '88',
+          borderColor: tc.primary,
+          borderWidth: 1,
+          borderRadius: 3
+        },
+        {
+          label: 'After',
+          data: afterVals,
+          backgroundColor: afterVals.map(function(v, i) {
+            return v >= beforeVals[i] ? tc.green + '88' : tc.red + '88';
+          }),
+          borderColor: afterVals.map(function(v, i) {
+            return v >= beforeVals[i] ? tc.green : tc.red;
+          }),
+          borderWidth: 1,
+          borderRadius: 3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: tc.muted, font: { size: 10 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return ctx.dataset.label + ': $' + ctx.raw.toLocaleString(undefined, {maximumFractionDigits: 0});
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: tc.muted, font: { size: 9 }, maxRotation: 45, minRotation: 45 },
+          grid: { display: false }
+        },
+        y: {
+          ticks: {
+            color: tc.muted,
+            callback: function(v) { return '$' + (v / 1000).toFixed(1) + 'k'; }
+          },
+          grid: { color: tc.border + '40' }
+        }
+      }
+    }
+  });
+}
+
+function setEqualWeight() {
+  if (!DATA) return;
+  var allTickers = Object.keys(DATA.tickers);
+  var eqWeight = (100 / allTickers.length).toFixed(1);
+  allTickers.forEach(function(sym) {
+    var el = document.getElementById('pw_' + sym);
+    if (el) el.value = eqWeight;
+  });
+  calcPortfolio();
+}
+
+function resetWeights() {
+  if (!DATA) return;
+  Object.keys(DATA.tickers).forEach(function(sym) {
+    var el = document.getElementById('pw_' + sym);
+    if (el) el.value = '0';
+  });
+  calcPortfolio();
+}
+
+// ─── 5. Risk Summary ───
+function renderRiskSummary() {
+  if (!DATA || !DATA.risks) return;
+  var html = '';
+  DATA.risks.forEach(function(risk) {
+    var impactClass = risk.impact === 'Critical' ? 'risk-critical' : (risk.impact === 'High' ? 'risk-high' : (risk.impact === 'Medium' ? 'risk-med' : 'risk-low'));
+    var probClass = risk.probability === 'High' ? 'risk-high' : (risk.probability === 'Medium' ? 'risk-med' : 'risk-low');
+
+    html += '<div class="risk-card">' +
+      '<div class="risk-card-name" data-i18n="' + risk.name + '">' + risk.name + '</div>' +
+      '<div class="risk-card-row"><span data-i18n="Impact">Impact</span><span class="risk-badge ' + impactClass + '">' + risk.impact + '</span></div>' +
+      '<div class="risk-card-row"><span data-i18n="Probability">Probability</span><span class="risk-badge ' + probClass + '">' + risk.probability + '</span></div>' +
+      '<div style="margin-top:var(--space-2)">' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px" data-i18n="Affected Layers">Affected Layers</div>' +
+        '<div class="risk-tags">' + risk.layers.map(function(l) { return '<span class="risk-tag">' + l + '</span>'; }).join('') + '</div>' +
+      '</div>' +
+      '<div style="margin-top:var(--space-2)">' +
+        '<div style="font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px" data-i18n="Affected Tickers">Affected Tickers</div>' +
+        '<div class="risk-tags">' + risk.tickers.map(function(t) { return '<span class="risk-tag" style="color:var(--primary);cursor:pointer" onclick="openPanel(\'' + t + '\')">' + t + '</span>'; }).join('') + '</div>' +
+      '</div>' +
+      '</div>';
+  });
+  document.getElementById('riskGrid').innerHTML = html;
+}
+
+function onLayerChange() { renderScenario(); }
+</script>
+</body>
+</html>
